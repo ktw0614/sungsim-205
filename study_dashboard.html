@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학습 소모임 50분 대시보드</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Pretendard Variable"', 'Pretendard', '-apple-system', 'sans-serif'],
+                    },
+                    colors: {
+                        pastel: {
+                            purple: '#e9d5ff', /* purple-200 */
+                            pink: '#fbcfe8', /* pink-200 */
+                            blue: '#bfdbfe', /* blue-200 */
+                            yellow: '#fef08a', /* yellow-200 */
+                            mint: '#bbf7d0', /* green-200 */
+                        },
+                        glass: {
+                            bg: 'rgba(255, 255, 255, 0.65)',
+                            border: 'rgba(255, 255, 255, 0.5)'
+                        }
+                    },
+                    animation: {
+                        'gradient-x': 'gradient-x 15s ease infinite',
+                    },
+                    keyframes: {
+                        'gradient-x': {
+                            '0%, 100%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'left center'
+                            },
+                            '50%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'right center'
+                            },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            /* 부드러운 파스텔 그라데이션 배경 애니메이션 */
+            background: linear-gradient(-45deg, #e0c3fc, #8ec5fc, #fbc2eb, #a18cd1);
+            background-size: 400% 400%;
+            animation: gradient-x 15s ease infinite;
+            min-height: 100vh;
+            color: #334155; /* slate-700 */
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        .glass-input {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.3); /* purple focus */
+        }
+
+        /* 커스텀 스크롤바 */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: rgba(167, 139, 250, 0.5); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(167, 139, 250, 0.8); }
+    </style>
+</head>
+<body class="antialiased p-4 md:p-8 flex items-center justify-center">
+
+    <!-- 토스트 메시지 컨테이너 (alert 대체용) -->
+    <div id="toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-3"></div>
+
+    <main class="w-full max-w-5xl glass-panel rounded-3xl p-6 md:p-10 flex flex-col gap-8">
+        
+        <!-- 헤더 영역: 타이틀 및 타이머 -->
+        <header class="flex flex-col md:flex-row justify-between items-center gap-6 border-b border-white/40 pb-6">
+            <div>
+                <span class="bg-indigo-100 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full mb-2 inline-block">학급 학습공동체</span>
+                <h1 class="text-3xl font-black text-slate-800 tracking-tight"><i class="fa-solid fa-people-group mr-2 text-indigo-500"></i>학습 소모임 대시보드</h1>
+            </div>
+            
+            <!-- 50분 뽀모도로 타이머 -->
+            <div class="glass-panel px-6 py-4 rounded-2xl flex items-center gap-6">
+                <div class="text-center">
+                    <p class="text-sm font-bold text-slate-500 mb-1">남은 시간</p>
+                    <div id="timer-display" class="text-4xl md:text-5xl font-black text-indigo-600 tabular-nums tracking-tighter transition-colors duration-500">
+                        50:00
+                    </div>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <button id="btn-timer-toggle" class="bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl w-12 h-10 flex items-center justify-center transition-colors shadow-sm">
+                        <i class="fa-solid fa-play"></i>
+                    </button>
+                    <button id="btn-timer-reset" class="bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-xl w-12 h-10 flex items-center justify-center transition-colors shadow-sm">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 탭 네비게이션 -->
+        <nav class="flex gap-2 p-1 bg-white/40 rounded-2xl overflow-x-auto">
+            <button onclick="switchTab('tab-step1')" id="btn-tab-step1" class="tab-btn flex-1 py-3 px-4 rounded-xl font-bold text-sm md:text-base transition-all bg-white shadow-sm text-indigo-600 flex items-center justify-center gap-2 min-w-[140px]">
+                <i class="fa-solid fa-flag text-pastel-yellow"></i> 1. 목표 설정 <span class="text-xs font-normal text-slate-400 block md:inline">(0~5분)</span>
+            </button>
+            <button onclick="switchTab('tab-step2')" id="btn-tab-step2" class="tab-btn flex-1 py-3 px-4 rounded-xl font-bold text-sm md:text-base transition-all text-slate-500 hover:bg-white/60 flex items-center justify-center gap-2 min-w-[140px]">
+                <i class="fa-solid fa-comments text-pastel-pink"></i> 2. 티칭&런칭 <span class="text-xs font-normal text-slate-400 block md:inline">(5~40분)</span>
+            </button>
+            <button onclick="switchTab('tab-step3')" id="btn-tab-step3" class="tab-btn flex-1 py-3 px-4 rounded-xl font-bold text-sm md:text-base transition-all text-slate-500 hover:bg-white/60 flex items-center justify-center gap-2 min-w-[140px]">
+                <i class="fa-solid fa-file-signature text-pastel-mint"></i> 3. 보고서 작성 <span class="text-xs font-normal text-slate-400 block md:inline">(40~50분)</span>
+            </button>
+        </nav>
+
+        <!-- 콘텐츠 영역 -->
+        <div class="relative min-h-[400px]">
+            
+            <!-- Step 1. 오늘의 퀘스트 (목표 설정) -->
+            <section id="tab-step1" class="tab-content block animate-[fadeIn_0.3s_ease-in-out]">
+                <div class="bg-white/60 rounded-2xl p-6 md:p-8">
+                    <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                        <i class="fa-solid fa-crosshairs text-indigo-500"></i> 오늘의 학습 퀘스트
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-600 mb-2">팀명 (조 이름)</label>
+                            <input type="text" id="group-name" placeholder="예: 미적분 마스터조" class="glass-input w-full p-3 rounded-xl text-slate-800">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-600 mb-2">활동 장소 및 회차</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="location" placeholder="예: 2학년 홈베이스" class="glass-input w-2/3 p-3 rounded-xl text-slate-800">
+                                <input type="number" id="session-num" placeholder="회차(예: 1)" min="1" class="glass-input w-1/3 p-3 rounded-xl text-slate-800">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-600 mb-2">팀장 (리더)</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="leader-id" placeholder="학번" class="glass-input w-1/3 p-3 rounded-xl text-slate-800">
+                                <input type="text" id="leader-name" placeholder="이름" class="glass-input w-2/3 p-3 rounded-xl text-slate-800">
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-bold text-slate-600">참여 팀원 (최대 5명)</label>
+                                <button type="button" onclick="addMemberInput()" id="btn-add-member" class="text-xs font-bold bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full hover:bg-indigo-200 transition-colors flex items-center">
+                                    <i class="fa-solid fa-plus mr-1"></i>추가
+                                </button>
+                            </div>
+                            <div id="members-container" class="flex flex-col gap-2">
+                                <!-- 기본 제공되는 1번째 팀원 입력란 (삭제 불가) -->
+                                <div class="flex gap-2 member-row items-center">
+                                    <input type="text" class="member-id glass-input w-1/3 p-3 rounded-xl text-slate-800" placeholder="학번">
+                                    <input type="text" class="member-name glass-input flex-1 p-3 rounded-xl text-slate-800" placeholder="이름">
+                                    <div class="w-6 shrink-0"></div> <!-- 여백 맞춤용 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-600 mb-2">오늘 50분 동안 완수할 구체적 목표</label>
+                        <textarea id="today-goal" rows="3" placeholder="예: 수능특강 미적분 p.45~48 3점 문항 10문제 풀이 방법 완벽하게 서로 설명하기" class="glass-input w-full p-4 rounded-xl text-slate-800 resize-none"></textarea>
+                    </div>
+                    <div class="mt-6 text-right">
+                        <button onclick="saveGoal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-transform hover:-translate-y-1">
+                            <i class="fa-solid fa-check mr-2"></i>목표 설정 완료
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 2. 티칭 & 런칭 (Q&A 티켓 시스템) -->
+            <section id="tab-step2" class="tab-content hidden animate-[fadeIn_0.3s_ease-in-out]">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+                    <!-- 질문 등록 폼 -->
+                    <div class="lg:col-span-1 bg-white/60 rounded-2xl p-6 flex flex-col gap-4">
+                        <h2 class="text-xl font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-hand-paper text-pink-400"></i> 도움 요청하기
+                        </h2>
+                        <p class="text-sm text-slate-500 mb-2">모르는 문제나 개념이 생기면 티켓을 등록하고, 아는 멘토가 설명해주세요!</p>
+                        
+                        <input type="text" id="q-author" placeholder="질문자 이름" class="glass-input w-full p-3 rounded-xl text-slate-800 text-sm">
+                        <textarea id="q-content" rows="4" placeholder="어떤 부분이 이해가 안 되나요? (예: 5번 문제에서 미분 계수 구하는 과정)" class="glass-input w-full p-3 rounded-xl text-slate-800 text-sm resize-none"></textarea>
+                        
+                        <button onclick="addTicket()" class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-colors mt-auto">
+                            <i class="fa-solid fa-ticket mr-2"></i>질문 티켓 등록
+                        </button>
+                    </div>
+
+                    <!-- 질문 티켓 보드 -->
+                    <div class="lg:col-span-2 bg-white/40 border border-white/50 rounded-2xl p-6 flex flex-col">
+                        <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-chalkboard-user text-indigo-500"></i> 해결 대기 중인 질문 (<span id="ticket-count" class="text-indigo-600">0</span>)
+                        </h2>
+                        <!-- 티켓 리스트 컨테이너 -->
+                        <div id="ticket-list" class="flex-1 overflow-y-auto pr-2 flex flex-col gap-3 max-h-[350px]">
+                            <!-- 비어있을 때 표시 -->
+                            <div id="empty-state" class="flex flex-col items-center justify-center h-full text-slate-400 opacity-70 py-10">
+                                <i class="fa-regular fa-face-smile text-5xl mb-3"></i>
+                                <p>등록된 질문이 없습니다. 서로 잘 이해하고 있군요!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 3. 활동 보고서 작성 -->
+            <section id="tab-step3" class="tab-content hidden animate-[fadeIn_0.3s_ease-in-out]">
+                <div class="bg-white/60 rounded-2xl p-6 md:p-8">
+                    <div class="mb-6 flex justify-between items-center">
+                        <h2 class="text-2xl font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-file-lines text-teal-500"></i> 오늘의 활동 보고서
+                        </h2>
+                        <span class="text-xs bg-teal-100 text-teal-700 px-3 py-1 rounded-full font-bold">구글 시트 연동 폼(UI)</span>
+                    </div>
+                    
+                    <form id="report-form" onsubmit="submitReport(event)" class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1">1. 실제 진행한 학습 내용 (Fact)</label>
+                            <textarea required id="actual-learning" rows="2" placeholder="예: 영어 교과서 1과 본문 첫 번째 단락 설명, 과제 제시 및 암기, 예상 문제 2개 만들기" class="glass-input w-full p-4 rounded-xl text-slate-800 resize-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1">2. 오늘 새롭게 알게 된 점 (배운 내용)</label>
+                            <!-- 값을 가져오기 위해 id="new-learning" 추가 -->
+                            <textarea required id="new-learning" rows="3" placeholder="멘토링을 통해 새롭게 이해한 개념이나 풀이법을 자세히 적어주세요." class="glass-input w-full p-4 rounded-xl text-slate-800 resize-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1">3. 친구에게 설명하면서 느낀 점 / 어려웠던 점</label>
+                            <!-- 값을 가져오기 위해 id="feelings" 추가 -->
+                            <textarea required id="feelings" rows="3" placeholder="자신이 알고 있는 것을 말로 설명하는 과정에서 느낀 점을 기록합니다." class="glass-input w-full p-4 rounded-xl text-slate-800 resize-none"></textarea>
+                        </div>
+                        <div class="pt-4 border-t border-white/50 text-right">
+                            <button type="submit" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-transform hover:-translate-y-1 inline-flex items-center gap-2">
+                                <i class="fa-regular fa-paper-plane"></i> 최종 제출 및 종료
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <style>
+        /* 페이드인 애니메이션 정의 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+
+    <script>
+        // -----------------------------------------
+        // 1. 전역 상태 변수
+        // -----------------------------------------
+        let timeLeft = 50 * 60; // 50분 (초 단위)
+        let timerInterval = null;
+        let isRunning = false;
+        let tickets = []; // 질문 티켓 저장 배열
+
+        // -----------------------------------------
+        // 2. 타이머 기능
+        // -----------------------------------------
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('timer-display').innerText = display;
+        }
+
+        function toggleTimer() {
+            const btnIcon = document.querySelector('#btn-timer-toggle i');
+            if (isRunning) {
+                // 일시정지
+                clearInterval(timerInterval);
+                btnIcon.className = 'fa-solid fa-play';
+            } else {
+                // 시작
+                timerInterval = setInterval(() => {
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                        updateTimerDisplay();
+                    } else {
+                        // 타이머 종료 시
+                        clearInterval(timerInterval);
+                        showToast("50분 학습이 종료되었습니다! 보고서를 작성해주세요.", "success");
+                        btnIcon.className = 'fa-solid fa-play';
+                        isRunning = false;
+                        switchTab('tab-step3'); // 3단계 탭으로 자동 이동
+                    }
+                }, 1000);
+                btnIcon.className = 'fa-solid fa-pause';
+            }
+            isRunning = !isRunning;
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 50 * 60;
+            isRunning = false;
+            document.querySelector('#btn-timer-toggle i').className = 'fa-solid fa-play';
+            updateTimerDisplay();
+        }
+
+        // 버튼에 이벤트 리스너 연결
+        document.getElementById('btn-timer-toggle').addEventListener('click', toggleTimer);
+        document.getElementById('btn-timer-reset').addEventListener('click', resetTimer);
+
+        // -----------------------------------------
+        // 3. 탭 네비게이션 기능
+        // -----------------------------------------
+        function switchTab(tabId) {
+            // 모든 콘텐츠 숨기기
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            
+            // 모든 버튼 스타일 초기화
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-white', 'shadow-sm', 'text-indigo-600');
+                el.classList.add('text-slate-500');
+            });
+
+            // 선택된 콘텐츠 보이기
+            document.getElementById(tabId).classList.remove('hidden');
+            
+            // 선택된 버튼 하이라이트
+            const activeBtn = document.getElementById('btn-' + tabId);
+            activeBtn.classList.remove('text-slate-500');
+            activeBtn.classList.add('bg-white', 'shadow-sm', 'text-indigo-600');
+        }
+
+        // -----------------------------------------
+        // 4. 공통 UI: 토스트 알림 기능 (alert 대체)
+        // -----------------------------------------
+        function showToast(message, type = "success") {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const bgColor = type === "success" ? "bg-teal-500" : "bg-rose-500";
+            const icon = type === "success" ? "fa-check-circle" : "fa-circle-exclamation";
+
+            toast.className = `${bgColor} text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-3 animate-[fadeIn_0.3s_ease-in-out]`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span class="text-sm font-bold">${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            // 3초 후 사라짐
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-10px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // -----------------------------------------
+        // 5. 각 단계별 버튼 기능 (목표 설정, 질문 티켓)
+        // -----------------------------------------
+        function saveGoal() {
+            const goal = document.getElementById('today-goal').value;
+            if (!goal.trim()) {
+                showToast("오늘 완수할 구체적인 목표를 입력해주세요!", "error");
+                return;
+            }
+            showToast("목표가 설정되었습니다! 2단계 티칭&런칭을 시작하세요.", "success");
+            switchTab('tab-step2');
+        }
+
+        function renderTickets() {
+            const list = document.getElementById('ticket-list');
+            const count = document.getElementById('ticket-count');
+            const emptyState = document.getElementById('empty-state');
+            
+            count.innerText = tickets.length;
+            
+            if (tickets.length === 0) {
+                emptyState.style.display = 'flex';
+                list.innerHTML = '';
+                list.appendChild(emptyState);
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            list.innerHTML = '';
+            
+            tickets.forEach((ticket, index) => {
+                const el = document.createElement('div');
+                el.className = 'bg-white/80 p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-start gap-4';
+                el.innerHTML = `
+                    <div>
+                        <span class="inline-block bg-pink-100 text-pink-600 text-xs font-bold px-2 py-1 rounded mb-2"><i class="fa-solid fa-user mr-1"></i>${ticket.author}</span>
+                        <p class="text-sm text-slate-700 break-words">${ticket.content}</p>
+                    </div>
+                    <button onclick="resolveTicket(${index})" class="shrink-0 text-slate-300 hover:text-indigo-500 transition-colors" title="해결 완료하기">
+                        <i class="fa-solid fa-circle-check text-3xl"></i>
+                    </button>
+                `;
+                list.appendChild(el);
+            });
+        }
+
+        function addTicket() {
+            const author = document.getElementById('q-author').value;
+            const content = document.getElementById('q-content').value;
+            
+            if (!author.trim() || !content.trim()) {
+                showToast("질문자 이름과 내용을 모두 입력해주세요.", "error");
+                return;
+            }
+            
+            tickets.push({ author, content });
+            document.getElementById('q-author').value = '';
+            document.getElementById('q-content').value = '';
+            
+            renderTickets();
+            showToast("질문 티켓이 보드에 등록되었습니다.", "success");
+        }
+
+        function resolveTicket(index) {
+            tickets.splice(index, 1);
+            renderTickets();
+            showToast("질문이 해결되었습니다! 멋진 멘토링이네요 👏", "success");
+        }
+
+        // -----------------------------------------
+        // 6. 기능: 보고서 제출 (구글 시트 연동)
+        // -----------------------------------------
+        function submitReport(e) {
+            e.preventDefault();
+            
+            // 학번과 이름을 조합하여 보기 좋은 문자열로 생성
+            const leaderInfo = `${document.getElementById('leader-id').value} ${document.getElementById('leader-name').value}`.trim();
+            
+            // 여러 명의 팀원 정보를 콤마(,)로 연결하여 생성
+            const memberRows = document.querySelectorAll('.member-row');
+            let membersArray = [];
+            memberRows.forEach(row => {
+                const mId = row.querySelector('.member-id').value.trim();
+                const mName = row.querySelector('.member-name').value.trim();
+                if (mId || mName) {
+                    membersArray.push(`${mId} ${mName}`.trim());
+                }
+            });
+            const membersInfo = membersArray.join(', ');
+
+            // 1. 제출할 데이터 객체 생성 (Apps Script의 변수명과 일치시킴)
+            const reportData = {
+                teamName: document.getElementById('group-name').value,
+                place: document.getElementById('location').value,
+                session: document.getElementById('session-num').value,
+                leader: leaderInfo,
+                members: membersInfo,
+                goal: document.getElementById('today-goal').value,
+                activity: document.getElementById('actual-learning').value,
+                learned: document.getElementById('new-learning').value,
+                difficulties: document.getElementById('feelings').value,
+                reflection: "" // 성찰 및 계획 (에러 방지용 빈 값)
+            };
+
+            // 2. 구글 웹 앱 URL 
+            const scriptURL = 'https://script.google.com/macros/s/AKfycbzMjGpn2GKLdUcm_H8pLtikVQAKDptQVmlTjwCDSZ5fgPECIGCtn6rksIqOBAybGhgt/exec';
+
+            // 3. 전송 중 버튼 상태 변경 (스피너 로딩 효과)
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalBtnHtml = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 전송 중...';
+            submitBtn.disabled = true;
+
+            // 4. 구글 시트로 데이터 전송 (보안 에러 방지를 위해 text/plain 적용)
+            fetch(scriptURL, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(reportData) 
+            })
+            .then(response => {
+                showToast("활동 보고서가 성공적으로 전송되었습니다! 수고하셨습니다. 👏", "success");
+                e.target.reset(); // 폼 초기화
+                resetTimer();     // 타이머 리셋
+                switchTab('tab-step1'); // 처음 탭으로 이동
+            })
+            .catch(error => {
+                console.error('Error!', error.message);
+                showToast("전송 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.", "error");
+            })
+            .finally(() => {
+                submitBtn.innerHTML = originalBtnHtml;
+                submitBtn.disabled = false;
+            });
+        }
+
+        // -----------------------------------------
+        // 7. 팀원 입력창 동적 추가/제거 기능
+        // -----------------------------------------
+        function addMemberInput() {
+            const container = document.getElementById('members-container');
+            const currentCount = container.querySelectorAll('.member-row').length;
+            
+            if (currentCount >= 5) {
+                showToast("팀원은 최대 5명까지만 추가할 수 있습니다.", "error");
+                return;
+            }
+            
+            const row = document.createElement('div');
+            row.className = 'flex gap-2 member-row items-center animate-[fadeIn_0.2s_ease-in-out]';
+            row.innerHTML = `
+                <input type="text" class="member-id glass-input w-1/3 p-3 rounded-xl text-slate-800" placeholder="학번">
+                <input type="text" class="member-name glass-input flex-1 p-3 rounded-xl text-slate-800" placeholder="이름">
+                <button type="button" onclick="this.parentElement.remove(); checkMemberCount();" class="w-6 shrink-0 flex items-center justify-center text-slate-400 hover:text-rose-500 transition-colors" title="삭제">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            `;
+            container.appendChild(row);
+            checkMemberCount();
+        }
+
+        function checkMemberCount() {
+            const currentCount = document.querySelectorAll('.member-row').length;
+            const addBtn = document.getElementById('btn-add-member');
+            if (currentCount >= 5) {
+                addBtn.style.display = 'none';
+            } else {
+                addBtn.style.display = 'flex';
+            }
+        }
+
+        // 페이지 로드 시 초기화 렌더링
+        updateTimerDisplay();
+        renderTickets();
+    </script>
+</body>
+</html>
