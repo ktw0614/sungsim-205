@@ -152,7 +152,7 @@
             <!-- 정렬 및 필터 바 -->
             <div class="flex justify-between items-center mb-6 px-2">
                 <h3 class="text-lg font-bold text-slate-700">등록된 아이디어 <span id="total-ideas" class="text-purple-500">0</span></h3>
-                <select id="sort-select" onchange="renderIdeas()" class="bg-white border border-slate-200 text-sm rounded-lg focus:ring-purple-500 focus:border-purple-500 block p-2">
+                <select id="sort-select" onchange="renderIdeas()" class="bg-white border border-slate-200 text-sm rounded-lg focus:ring-purple-500 focus:border-purple-500 block p-2 outline-none">
                     <option value="newest">최신순</option>
                     <option value="popular">공감(하트)순</option>
                 </select>
@@ -160,7 +160,11 @@
 
             <!-- 아이디어 카드 그리드 -->
             <div id="idea-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5 auto-rows-max">
-                <!-- 아이디어 카드가 여기에 자바스크립트로 렌더링 됩니다. -->
+                <!-- 로딩 중 표시 -->
+                <div class="col-span-full flex flex-col items-center justify-center py-20 text-slate-400">
+                    <i class="fa-solid fa-spinner fa-spin text-4xl mb-4 text-purple-400"></i>
+                    <p class="font-medium">아이디어를 불러오는 중입니다...</p>
+                </div>
             </div>
             
             <!-- 비어있을 때 표시 -->
@@ -173,12 +177,10 @@
     </main>
 
     <script>
-        // 초기 목업 데이터 (학생들이 빈 화면을 보지 않도록 샘플 제공)
-        let ideas = [
-            { id: 1, text: "체육복 등교를 전면 허용해 주시면 아침마다 옷 갈아입는 시간을 단축해서 지각이 줄어들 것 같아요!", color: "yellow", likes: 12, time: "방금 전" },
-            { id: 2, text: "급식실 배식 줄이 너무 길어서 점심시간이 부족해요. 학년별 배식 시간을 5분씩만 엇갈리게 조정해보면 어떨까요?", color: "pink", likes: 8, time: "10분 전" },
-            { id: 3, text: "도서관에 만화로 된 교양 서적이 더 많아졌으면 좋겠습니다. 접근성이 좋아질 것 같아요.", color: "blue", likes: 3, time: "30분 전" }
-        ];
+        // 선생님의 구글 앱스 스크립트 웹 앱 URL
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwSNH3P7oAIClEtV94_BGWWjxT5H7Fnsmxz00YX3QtU4BHSywOEWV4tGT-tY7-gJcP7WA/exec';
+        
+        let ideas = []; // 구글 시트에서 불러온 데이터를 담을 배열
 
         // 텍스트 글자 수 세기
         document.getElementById('idea-text').addEventListener('input', function(e) {
@@ -201,7 +203,7 @@
             }, 3000);
         }
 
-        // 색상 매핑 함수 (Tailwind 클래스 적용을 위함)
+        // 색상 매핑 함수
         function getColorClasses(colorName) {
             const colors = {
                 purple: 'bg-purple-50 border-purple-100',
@@ -210,54 +212,117 @@
                 yellow: 'bg-yellow-50 border-yellow-100',
                 mint: 'bg-green-50 border-green-100'
             };
-            return colors[colorName] || colors.purple;
+            return colors[colorName] || colors.purple; // 기본값 purple
         }
 
-        // 아이디어 제출
+        // 날짜 포맷 함수 (예: 9월 9일)
+        function formatDate(dateString) {
+            if (!dateString) return "방금 전";
+            const date = new Date(dateString);
+            return `${date.getMonth() + 1}월 ${date.getDate()}일`;
+        }
+
+        // 1. 구글 시트에서 데이터 불러오기 (GET)
+        async function loadIdeas() {
+            const grid = document.getElementById('idea-grid');
+            const emptyState = document.getElementById('empty-state');
+            
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const data = await response.json();
+                
+                // 데이터 가공 및 최신순 정렬 (배열 역순)
+                ideas = data.map(item => ({
+                    id: item.id,
+                    text: item.content,
+                    color: item.theme,
+                    likes: Number(item.likes) || 0,
+                    time: formatDate(item.timestamp)
+                })).reverse();
+                
+                renderIdeas();
+            } catch (error) {
+                console.error("데이터 로딩 실패:", error);
+                grid.innerHTML = '<div class="col-span-full text-center text-rose-500 py-10 font-bold">데이터를 불러오는 데 실패했습니다. 새로고침 해주세요.</div>';
+            }
+        }
+
+        // 2. 아이디어 제출하기 (POST)
         function submitIdea(e) {
             e.preventDefault();
             const textInput = document.getElementById('idea-text');
             const text = textInput.value.trim();
             const color = document.querySelector('input[name="color"]:checked').value;
+            const submitBtn = e.target.querySelector('button[type="submit"]');
             
             if (!text) return;
 
-            const newIdea = {
-                id: Date.now(),
-                text: text,
-                color: color,
-                likes: 0,
-                time: "방금 전"
+            // 로딩 상태로 변경
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 전송 중...';
+            submitBtn.disabled = true;
+
+            // 구글 시트로 보낼 데이터
+            const payload = {
+                action: "add",
+                content: text,
+                theme: color
             };
 
-            ideas.unshift(newIdea); // 배열 맨 앞에 추가
-            
-            // 폼 초기화
-            textInput.value = '';
-            document.getElementById('char-count').innerText = '0';
-            
-            renderIdeas();
-            showToast("아이디어가 월에 등록되었습니다!");
+            // fetch API로 전송 (CORS 에러 방지를 위해 text/plain 사용)
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "success") {
+                    // 입력창 초기화
+                    textInput.value = '';
+                    document.getElementById('char-count').innerText = '0';
+                    showToast("아이디어가 성공적으로 등록되었습니다!");
+                    // 데이터 다시 불러오기 (화면 갱신)
+                    loadIdeas(); 
+                }
+            })
+            .catch(error => {
+                console.error("전송 에러:", error);
+                showToast("오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+            })
+            .finally(() => {
+                // 버튼 원상 복구
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+            });
         }
 
-        // 하트(공감) 누르기
+        // 3. 하트(공감) 누르기 (POST)
         function toggleLike(id) {
-            const idea = ideas.find(i => i.id === id);
-            if(idea) {
-                // 이 간단한 버전에서는 누를 때마다 올라가게 합니다. (실제 서비스에선 localStorage 등으로 중복 방지)
-                idea.likes += 1; 
+            const idea = ideas.find(i => i.id === id.toString());
+            if (idea) {
+                // 1) 화면에서 즉시 하트 수 +1 (반응성을 위해)
+                idea.likes += 1;
                 renderIdeas();
                 
-                // 클릭한 하트에 간단한 애니메이션 효과
+                // 애니메이션 효과
                 const heartBtn = document.getElementById(`heart-${id}`);
-                if(heartBtn) {
+                if (heartBtn) {
                     heartBtn.classList.add('text-rose-500', 'scale-125');
                     setTimeout(() => heartBtn.classList.remove('scale-125'), 200);
                 }
+
+                // 2) 백그라운드에서 구글 시트에 하트 수 증가 요청
+                const payload = { action: "like", id: id.toString() };
+                fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                }).catch(err => console.error("좋아요 전송 실패", err));
             }
         }
 
-        // 아이디어 렌더링
+        // 4. 화면에 아이디어 카드 렌더링하기
         function renderIdeas() {
             const grid = document.getElementById('idea-grid');
             const emptyState = document.getElementById('empty-state');
@@ -276,16 +341,15 @@
             emptyState.style.display = 'none';
             grid.innerHTML = '';
 
-            // 정렬
+            // 정렬 처리
             let sortedIdeas = [...ideas];
             if (sortVal === 'popular') {
+                // 하트 수가 많은 순으로 정렬
                 sortedIdeas.sort((a, b) => b.likes - a.likes);
-            } else {
-                // 최신순은 배열 역순(기본적으로 unshift 하므로)
-                sortedIdeas.sort((a, b) => b.id - a.id);
-            }
+            } 
+            // '최신순'일 경우 loadIdeas()에서 이미 역순 정렬해 두었음
 
-            // 카드 생성
+            // HTML 요소 생성
             sortedIdeas.forEach((idea) => {
                 const cardClasses = getColorClasses(idea.color);
                 const el = document.createElement('div');
@@ -298,7 +362,7 @@
                     </div>
                     <div class="flex justify-between items-end border-t border-slate-200/50 pt-3 mt-2">
                         <span class="text-xs text-slate-400 font-medium"><i class="fa-regular fa-clock"></i> ${idea.time}</span>
-                        <button onclick="toggleLike(${idea.id})" class="flex items-center gap-1.5 text-slate-400 hover:text-rose-500 transition-all group">
+                        <button onclick="toggleLike('${idea.id}')" class="flex items-center gap-1.5 text-slate-400 hover:text-rose-500 transition-all group">
                             <i id="heart-${idea.id}" class="fa-solid fa-heart text-lg transition-transform duration-200 group-hover:scale-110 ${idea.likes > 0 ? 'text-rose-400' : ''}"></i>
                             <span class="font-bold text-sm ${idea.likes > 0 ? 'text-rose-500' : ''}">${idea.likes > 0 ? idea.likes : '공감'}</span>
                         </button>
@@ -308,8 +372,8 @@
             });
         }
 
-        // 초기 렌더링
-        window.onload = renderIdeas;
+        // 페이지가 열릴 때 자동으로 데이터 불러오기 시작
+        window.onload = loadIdeas;
     </script>
 </body>
 </html>
