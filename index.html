@@ -68,6 +68,24 @@
             margin: 0;
         }
 
+        /* 새로 추가된 섹션 타이틀 스타일 */
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 40px 0 20px 0;
+            padding-left: 14px;
+            border-left: 6px solid var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: fadeInDown 0.8s ease-out forwards;
+            opacity: 0;
+        }
+
+        .section-wrapper:nth-of-type(1) .section-title { animation-delay: 0.1s; border-color: #B5D596; }
+        .section-wrapper:nth-of-type(2) .section-title { animation-delay: 0.3s; border-color: #FFB7B2; }
+
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -95,10 +113,11 @@
             background: rgba(255, 255, 255, 0.9);
         }
 
-        .card:nth-child(1) { animation-delay: 0.1s; }
-        .card:nth-child(2) { animation-delay: 0.2s; }
-        .card:nth-child(3) { animation-delay: 0.3s; }
-        .card:nth-child(4) { animation-delay: 0.4s; }
+        /* 카테고리 분리에 따른 애니메이션 순서 재설정 */
+        .section-wrapper:nth-of-type(1) .card:nth-child(1) { animation-delay: 0.15s; }
+        .section-wrapper:nth-of-type(1) .card:nth-child(2) { animation-delay: 0.25s; }
+        .section-wrapper:nth-of-type(2) .card:nth-child(1) { animation-delay: 0.35s; }
+        .section-wrapper:nth-of-type(2) .card:nth-child(2) { animation-delay: 0.45s; }
 
         .card-icon {
             width: 60px;
@@ -198,55 +217,64 @@
         <p>우리들의 아이디어와 배움이 모이는 공간</p>
     </div>
 
-    <div class="dashboard-grid">
-        <!-- 1. 북 갤러리 카드 -->
-        <div class="card">
-            <div class="card-icon icon-book">
-                <i class="fa-solid fa-book-open-reader"></i>
+    <!-- 1. 시험 대비 학습 카테고리 -->
+    <div class="section-wrapper">
+        <h2 class="section-title"><i class="fa-solid fa-fire text-orange-400" style="color: #FF9A9E;"></i> 집중! 시험 대비 학습 영역</h2>
+        <div class="dashboard-grid">
+            <!-- 1-1. 순공 대시보드 카드 (최상단으로 이동) -->
+            <div class="card">
+                <div class="card-icon icon-tracker">
+                    <i class="fa-solid fa-fire"></i>
+                </div>
+                <h2>나의 순공 대시보드</h2>
+                <p>오늘 하루 나의 순수 공부 시간을 기록하고 과목별 학습 밸런스를 확인해 보세요. 누적된 데이터는 시트로 자동 취합됩니다.</p>
+                <div class="action-buttons">
+                    <a href="study_time_tracker.html" class="btn btn-primary"><i class="fa-solid fa-stopwatch"></i> 대시보드 입장</a>
+                </div>
             </div>
-            <h2>학급 북 갤러리</h2>
-            <p>나를 변화시킨 책 속의 한 줄! 나만의 개성을 담아 디자인한 북카드를 전시하고 친구들과 감상평을 나누어 보세요.</p>
-            <div class="action-buttons">
-                <a href="book_gallery.html" class="btn btn-primary"><i class="fa-solid fa-camera-retro"></i> 북 갤러리 입장</a>
-                <a href="./나만의 북카드 만들기 안내문.pdf" target="_blank" class="btn btn-secondary"><i class="fa-regular fa-file-lines"></i> 활동 안내문 보기</a>
+
+            <!-- 1-2. 소모임 활동 카드 -->
+            <div class="card">
+                <div class="card-icon icon-study">
+                    <i class="fa-solid fa-users-viewfinder"></i>
+                </div>
+                <h2>학습 소모임 활동</h2>
+                <p>스터디 모임 후 그날의 학습 목표, 알게 된 점, 어려웠던 점을 기록하세요. 제출된 보고서는 선생님의 시트로 자동 취합됩니다.</p>
+                <div class="action-buttons">
+                    <a href="study_dashboard.html" class="btn btn-primary"><i class="fa-solid fa-pen-to-square"></i> 보고서 작성하기</a>
+                </div>
             </div>
         </div>
+    </div>
 
-        <!-- 2. 아이디어 월 카드 -->
-        <div class="card">
-            <div class="card-icon icon-idea">
-                <i class="fa-solid fa-lightbulb"></i>
+    <!-- 2. 창의적 체험 활동 카테고리 -->
+    <div class="section-wrapper">
+        <h2 class="section-title"><i class="fa-solid fa-palette text-pink-400" style="color: #A18CD1;"></i> 소통과 공감! 학급 창체 영역</h2>
+        <div class="dashboard-grid">
+            <!-- 2-1. 북 갤러리 카드 -->
+            <div class="card">
+                <div class="card-icon icon-book">
+                    <i class="fa-solid fa-book-open-reader"></i>
+                </div>
+                <h2>학급 북 갤러리</h2>
+                <p>나를 변화시킨 책 속의 한 줄! 나만의 개성을 담아 디자인한 북카드를 전시하고 친구들과 감상평을 나누어 보세요.</p>
+                <div class="action-buttons">
+                    <a href="book_gallery.html" class="btn btn-primary"><i class="fa-solid fa-camera-retro"></i> 북 갤러리 입장</a>
+                    <a href="./나만의 북카드 만들기 안내문.pdf" target="_blank" class="btn btn-secondary"><i class="fa-regular fa-file-lines"></i> 활동 안내문 보기</a>
+                </div>
             </div>
-            <h2>울림 프로젝트</h2>
-            <p>학교 생활의 불편함을 개선할 반짝이는 아이디어를 남겨주세요. 공감(하트)을 가장 많이 받은 의견은 우리 반 공식 안건이 됩니다.</p>
-            <div class="action-buttons">
-                <a href="ullim_idea_wall.html" class="btn btn-primary"><i class="fa-solid fa-comments"></i> 아이디어 월 입장</a>
-                <a href="./울림 프로젝트 안내문.pdf" target="_blank" class="btn btn-secondary"><i class="fa-regular fa-file-lines"></i> 활동 안내문 보기</a>
-            </div>
-        </div>
 
-        <!-- 3. 소모임 활동 카드 -->
-        <div class="card">
-            <div class="card-icon icon-study">
-                <i class="fa-solid fa-users-viewfinder"></i>
-            </div>
-            <h2>학습 소모임 활동</h2>
-            <p>스터디 모임 후 그날의 학습 목표, 알게 된 점, 어려웠던 점을 기록하세요. 제출된 보고서는 선생님의 시트로 자동 취합됩니다.</p>
-            <div class="action-buttons">
-                <a href="study_dashboard.html" class="btn btn-primary"><i class="fa-solid fa-pen-to-square"></i> 보고서 작성하기</a>
-            </div>
-        </div>
-
-        <!-- 4. 순공 대시보드 카드 -->
-        <div class="card">
-            <div class="card-icon icon-tracker">
-                <i class="fa-solid fa-fire"></i>
-            </div>
-            <h2>나의 순공 대시보드</h2>
-            <p>오늘 하루 나의 순수 공부 시간을 기록하고 과목별 학습 밸런스를 확인해 보세요. 누적된 데이터는 시트로 자동 취합됩니다.</p>
-            <div class="action-buttons">
-                <!-- 파일명이 아래 생성할 파일명과 정확히 일치함 -->
-                <a href="study_time_tracker.html" class="btn btn-primary"><i class="fa-solid fa-stopwatch"></i> 대시보드 입장</a>
+            <!-- 2-2. 아이디어 월 카드 -->
+            <div class="card">
+                <div class="card-icon icon-idea">
+                    <i class="fa-solid fa-lightbulb"></i>
+                </div>
+                <h2>울림 프로젝트</h2>
+                <p>학교 생활의 불편함을 개선할 반짝이는 아이디어를 남겨주세요. 공감(하트)을 가장 많이 받은 의견은 우리 반 공식 안건이 됩니다.</p>
+                <div class="action-buttons">
+                    <a href="ullim_idea_wall.html" class="btn btn-primary"><i class="fa-solid fa-comments"></i> 아이디어 월 입장</a>
+                    <a href="./울림 프로젝트 안내문.pdf" target="_blank" class="btn btn-secondary"><i class="fa-regular fa-file-lines"></i> 활동 안내문 보기</a>
+                </div>
             </div>
         </div>
     </div>
