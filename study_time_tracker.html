@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나의 순공 대시보드</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Pretendard Variable"', 'Pretendard', '-apple-system', 'sans-serif'] },
+                    colors: {
+                        pastel: {
+                            pink: '#fbcfe8', purple: '#e9d5ff', blue: '#bfdbfe', 
+                            mint: '#bbf7d0', yellow: '#fef08a', orange: '#ffedd5'
+                        }
+                    },
+                    animation: {
+                        'float': 'float 3s ease-in-out infinite',
+                        'fade-in': 'fadeIn 0.4s ease-out forwards'
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-5px)' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 15%, #fbc2eb 60%, #a6c1ee 100%);
+            background-attachment: fixed;
+            color: #334155;
+            min-height: 100vh;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 10px 30px -10px rgba(31, 38, 135, 0.15);
+        }
+
+        .glass-input {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        .glass-input:focus {
+            outline: none;
+            border-color: #a855f7; 
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
+            background: #ffffff;
+        }
+
+        .modal-overlay {
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.8); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 1); }
+    </style>
+</head>
+<body class="antialiased p-4 md:p-8 flex items-center justify-center">
+
+    <div id="toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-3"></div>
+
+    <main class="w-full max-w-6xl flex flex-col gap-6">
+        
+        <header class="glass-panel rounded-3xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-4 relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 text-9xl opacity-20 text-white transform rotate-12 drop-shadow-md pointer-events-none">
+                <i class="fa-solid fa-stopwatch"></i>
+            </div>
+            
+            <div>
+                <h1 class="text-3xl font-black tracking-tight text-slate-800 flex items-center justify-center md:justify-start gap-2">
+                    <i class="fa-solid fa-fire text-pink-500"></i> 나의 순공 대시보드
+                </h1>
+                <p class="text-sm font-bold text-slate-600 mt-2 bg-white/60 px-3 py-1 rounded-full inline-block shadow-sm">
+                    오늘 하루도 목표를 향해 달리는 나를 응원해! 🏃‍♀️✨
+                </p>
+            </div>
+
+            <div class="flex items-center gap-3 relative z-10">
+                <button onclick="openSettings()" class="bg-white hover:bg-pink-50 text-slate-700 px-5 py-3 rounded-xl font-black shadow-sm border border-white transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-gear text-purple-500"></i> 내 과목 설정
+                </button>
+            </div>
+        </header>
+
+        <div class="flex flex-col lg:flex-row gap-6">
+            
+            <div class="w-full lg:w-1/3 flex flex-col gap-6">
+                
+                <div class="glass-panel rounded-3xl p-6 md:p-8">
+                    <h2 class="text-xl font-black mb-5 flex items-center gap-2 text-slate-800 border-b border-white/80 pb-3">
+                        <i class="fa-solid fa-pen-nib text-pink-500"></i> 학습 기록 추가
+                    </h2>
+                    
+                    <form id="record-form" onsubmit="addRecord(event)" class="flex flex-col gap-4">
+                        
+                        <div>
+                            <label class="block text-xs font-black text-slate-600 mb-1">학번 및 이름</label>
+                            <input type="text" id="input-student" required placeholder="예: 20101 김성심" class="glass-input w-full p-3 rounded-xl text-slate-800 text-sm font-bold shadow-sm">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-black text-slate-600 mb-1">학습 일자</label>
+                            <input type="date" id="input-date" required class="glass-input w-full p-3 rounded-xl text-slate-800 text-sm font-bold shadow-sm">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-black text-slate-600 mb-1">과목 선택 (설정에서 변경 가능)</label>
+                            <select id="input-subject" required class="glass-input w-full p-3 rounded-xl text-slate-800 text-sm font-bold shadow-sm">
+                                <!-- JS로 렌더링 됨 -->
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-black text-slate-600 mb-1">학습 교재</label>
+                                <select id="input-material" required class="glass-input w-full p-3 rounded-xl text-slate-800 text-sm font-bold shadow-sm">
+                                    <option value="교과서">교과서</option>
+                                    <option value="부교재">부교재</option>
+                                    <option value="기타 교재">기타 교재</option>
+                                    <option value="학습지/유인물">학습지/유인물</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-black text-slate-600 mb-1">학습 회차</label>
+                                <select id="input-pass" required class="glass-input w-full p-3 rounded-xl text-slate-800 text-sm font-bold shadow-sm">
+                                    <option value="1회독">1회독</option>
+                                    <option value="2회독">2회독</option>
+                                    <option value="3회독">3회독</option>
+                                    <option value="복습/문풀">복습 및 문풀</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-black text-slate-600 mb-1">순공 시간 (분 단위)</label>
+                            <div class="relative">
+                                <input type="number" id="input-time" required min="1" max="600" placeholder="예: 45" class="glass-input w-full p-3 rounded-xl text-slate-800 text-sm font-black pl-4 pr-10 shadow-sm">
+                                <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 font-black text-sm">분</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="mt-4 bg-gradient-to-r from-pink-500 to-purple-500 hover:opacity-90 text-white font-black py-4 px-6 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 text-lg">
+                            <i class="fa-solid fa-paper-plane"></i> 기록 완료 및 전송
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="w-full lg:w-2/3 flex flex-col gap-6">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="glass-panel rounded-3xl p-6 flex flex-col justify-center items-center text-center relative overflow-hidden">
+                        <div class="absolute -bottom-4 -left-4 w-32 h-32 bg-white/60 rounded-full filter blur-xl animate-float pointer-events-none"></div>
+                        <div class="absolute -top-4 -right-4 w-24 h-24 bg-pink-300/40 rounded-full filter blur-xl animate-float pointer-events-none" style="animation-delay: 1s;"></div>
+                        
+                        <h3 class="text-sm font-black text-slate-600 mb-2 relative z-10">이번 주 총 순공 시간</h3>
+                        <div class="flex items-baseline gap-2 relative z-10">
+                            <span id="total-hours" class="text-6xl font-black text-slate-800 drop-shadow-sm">0</span><span class="text-xl font-bold text-slate-600">시간</span>
+                            <span id="total-minutes" class="text-6xl font-black text-slate-800 ml-2 drop-shadow-sm">0</span><span class="text-xl font-bold text-slate-600">분</span>
+                        </div>
+                        <p class="text-xs font-black text-pink-600 bg-white/80 px-4 py-1.5 rounded-full mt-4 relative z-10 shadow-sm border border-pink-100">🔥 활활 불타오르는 중!</p>
+                    </div>
+
+                    <div class="glass-panel rounded-3xl p-6 flex flex-col items-center justify-center">
+                        <h3 class="text-sm font-black text-slate-600 w-full text-left mb-2">과목별 학습 밸런스</h3>
+                        <div class="w-full h-48 flex justify-center relative">
+                            <canvas id="balanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-3xl p-6 flex-grow flex flex-col h-full min-h-[300px]">
+                    <div class="flex justify-between items-center mb-4 border-b border-white/80 pb-2">
+                        <h3 class="text-sm font-black text-slate-600">내 최근 학습 기록 (최신순)</h3>
+                        <button onclick="clearRecords()" class="text-xs font-bold text-slate-500 hover:text-rose-500 transition-colors bg-white/80 px-3 py-1.5 rounded-lg shadow-sm">초기화</button>
+                    </div>
+                    
+                    <div id="record-list" class="flex flex-col gap-3 overflow-y-auto pr-2 max-h-[350px]">
+                        <!-- JS로 동적 렌더링 -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <div id="settings-modal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white/95 backdrop-blur-xl rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-fade-in flex flex-col max-h-[90vh] border border-white">
+            
+            <div class="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50/50">
+                <h3 class="text-xl font-black text-slate-800"><i class="fa-solid fa-list-check text-purple-500 mr-2"></i> 내 시험 과목 세팅</h3>
+                <button onclick="closeSettings()" class="text-slate-400 hover:text-rose-500 transition-colors">
+                    <i class="fa-solid fa-xmark text-2xl"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto">
+                <div class="mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-sm">
+                    <h4 class="text-sm font-black text-slate-700 mb-2">📌 공통 지정 과목 (기본 포함)</h4>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="bg-white text-slate-600 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">화법과 언어</span>
+                        <span class="bg-white text-slate-600 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">미적분Ⅰ</span>
+                        <span class="bg-white text-slate-600 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">영어Ⅱ</span>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h4 class="text-sm font-black text-purple-600 mb-2">📚 선택 과목 (택 4)</h4>
+                    <p class="text-xs font-bold text-slate-500 mb-3">본인이 수강하는 4과목을 겹치지 않게 선택해주세요.</p>
+                    <div class="grid grid-cols-2 gap-3" id="elective-selects">
+                        <select id="set-el1" class="glass-input w-full p-3 rounded-xl text-slate-800 text-sm bg-slate-50 font-bold border border-slate-200"></select>
+                        <select id="set-el2" class="glass-input w-full p-3 rounded-xl text-slate-800 text-sm bg-slate-50 font-bold border border-slate-200"></select>
+                        <select id="set-el3" class="glass-input w-full p-3 rounded-xl text-slate-800 text-sm bg-slate-50 font-bold border border-slate-200"></select>
+                        <select id="set-el4" class="glass-input w-full p-3 rounded-xl text-slate-800 text-sm bg-slate-50 font-bold border border-slate-200"></select>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <h4 class="text-sm font-black text-pink-600 mb-2">🌐 제2외국어 / 정보 (택 1)</h4>
+                    <select id="set-lang" class="glass-input w-full p-3 rounded-xl text-slate-800 text-sm font-bold bg-slate-50 border border-slate-200">
+                        <optgroup label="제2외국어">
+                            <option value="일본 문화">일본 문화</option>
+                            <option value="중국 문화">중국 문화</option>
+                        </optgroup>
+                        <optgroup label="정보">
+                            <option value="인공지능 기초" selected>인공지능 기초</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="factoryReset()" class="w-1/3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-black py-4 rounded-xl shadow-sm transition-all text-sm">
+                        전체 초기화
+                    </button>
+                    <button onclick="saveSettings()" class="w-2/3 bg-gradient-to-r from-slate-700 to-slate-800 hover:from-purple-600 hover:to-pink-500 text-white font-black py-4 rounded-xl shadow-lg transition-all text-lg">
+                        설정 저장 및 반영
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxctWaG6QluAVEfgU4mnTwkXqlFzyZLAa6PdSJfueA7ROzk_5Kvvxms1HO8JgtU9Yq65Q/exec'; 
+
+        let userSubjects = {
+            mandatory: ['화법과 언어', '미적분Ⅰ', '영어Ⅱ'],
+            elective4: ['주제 탐구 독서', '기하', '세계시민과 지리', '역학과 에너지'], 
+            elective1: '인공지능 기초' 
+        };
+
+        const electiveOptions = [
+            "주제 탐구 독서", "기하", "수학과제 탐구", "영미 문학 읽기", 
+            "세계시민과 지리", "세계사", "현대사회와 윤리", "정치", "법과 사회", 
+            "역학과 에너지", "물질과 에너지", "세포와 물질대사", "지구시스템과학"
+        ];
+
+        let studyRecords = [];
+        let balanceChartInstance = null;
+
+        const pastelColors = [
+            '#fbcfe8', '#e9d5ff', '#bfdbfe', '#bbf7d0', '#fef08a', 
+            '#ffedd5', '#fce7f3', '#c7d2fe', '#a78bfa', '#f472b6',
+            '#93c5fd', '#86efac', '#fde047'
+        ];
+
+        window.onload = () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('input-date').value = today;
+            
+            const savedName = localStorage.getItem('studentName');
+            if(savedName) document.getElementById('input-student').value = savedName;
+
+            loadData();
+            populateElectiveOptions();
+            renderSubjectOptions();
+            updateDashboard();
+        };
+
+        function loadData() {
+            try {
+                const savedSubjects = localStorage.getItem('userSubjects_v3');
+                if(savedSubjects) userSubjects = JSON.parse(savedSubjects);
+                const savedRecords = localStorage.getItem('studyRecords_v3');
+                if(savedRecords) {
+                    studyRecords = JSON.parse(savedRecords);
+                    if (!Array.isArray(studyRecords)) studyRecords = []; 
+                }
+            } catch(e) {
+                console.error(e);
+                studyRecords = [];
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('userSubjects_v3', JSON.stringify(userSubjects));
+            localStorage.setItem('studyRecords_v3', JSON.stringify(studyRecords));
+        }
+
+        function showToast(message, type = "success") {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = type === "success" ? "bg-purple-600" : "bg-rose-500";
+            const icon = type === "success" ? "fa-check-circle" : "fa-circle-exclamation";
+
+            toast.className = `${bgColor} text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-3 animate-fade-in`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span class="text-sm font-bold">${message}</span>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-10px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function populateElectiveOptions() {
+            const selects = ['set-el1', 'set-el2', 'set-el3', 'set-el4'];
+            selects.forEach((id) => {
+                const el = document.getElementById(id);
+                el.innerHTML = '<option value="">과목 선택</option>';
+                electiveOptions.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt;
+                    option.textContent = opt;
+                    el.appendChild(option);
+                });
+            });
+        }
+
+        function openSettings() { 
+            document.getElementById('set-el1').value = userSubjects.elective4[0] || '';
+            document.getElementById('set-el2').value = userSubjects.elective4[1] || '';
+            document.getElementById('set-el3').value = userSubjects.elective4[2] || '';
+            document.getElementById('set-el4').value = userSubjects.elective4[3] || '';
+            document.getElementById('set-lang').value = userSubjects.elective1 || '';
+            
+            document.getElementById('settings-modal').classList.remove('hidden'); 
+        }
+        
+        function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
+        
+        function saveSettings() {
+            const e1 = document.getElementById('set-el1').value;
+            const e2 = document.getElementById('set-el2').value;
+            const e3 = document.getElementById('set-el3').value;
+            const e4 = document.getElementById('set-el4').value;
+            const lang = document.getElementById('set-lang').value;
+
+            if(!e1 || !e2 || !e3 || !e4 || !lang) {
+                showToast('모든 선택 과목을 지정해주세요!', 'error');
+                return;
+            }
+
+            const electives = [e1, e2, e3, e4];
+            if(new Set(electives).size !== 4) {
+                showToast('중복된 과목이 있습니다. 다르게 선택해주세요.', 'error');
+                return;
+            }
+
+            userSubjects.elective4 = electives;
+            userSubjects.elective1 = lang;
+            
+            saveData();
+            renderSubjectOptions();
+            closeSettings();
+            showToast('과목 설정이 저장되었습니다!');
+        }
+
+        function renderSubjectOptions() {
+            const select = document.getElementById('input-subject');
+            select.innerHTML = '';
+            
+            const allSubjects = [...userSubjects.mandatory, ...userSubjects.elective4, userSubjects.elective1];
+            allSubjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject;
+                option.textContent = subject;
+                select.appendChild(option);
+            });
+        }
+
+        function addRecord(e) {
+            e.preventDefault();
+            
+            const studentName = document.getElementById('input-student').value;
+            const date = document.getElementById('input-date').value;
+            const subject = document.getElementById('input-subject').value;
+            const material = document.getElementById('input-material').value;
+            const pass = document.getElementById('input-pass').value;
+            const time = parseInt(document.getElementById('input-time').value, 10);
+
+            if (!time || time <= 0) {
+                showToast("올바른 학습 시간을 입력해주세요.", "error");
+                return;
+            }
+
+            localStorage.setItem('studentName', studentName);
+
+            const newRecord = {
+                id: Date.now(),
+                studentName: studentName, 
+                date: date,
+                subject: subject,
+                material: material,
+                pass: pass,
+                time: time
+            };
+
+            studyRecords.push(newRecord);
+            saveData(); 
+            document.getElementById('input-time').value = ''; 
+            updateDashboard();
+
+            if(WEB_APP_URL && WEB_APP_URL !== '여기에_웹앱_URL_입력') {
+                showToast('기록 중... 서버로 전송합니다.', 'success');
+                fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' }, 
+                    body: JSON.stringify(newRecord),
+                    redirect: 'follow'
+                })
+                .then(response => response.text())
+                .then(text => {
+                    try {
+                        const data = JSON.parse(text);
+                        if(data.result === 'success') {
+                            showToast('순공 시간이 성공적으로 기록되었습니다! 🔥');
+                        } else {
+                            showToast('데이터 저장 실패: ' + data.error, 'error');
+                        }
+                    } catch(e) {
+                        console.error('JSON 파싱 에러:', text);
+                        showToast('전송 실패: 앱스 스크립트 접근 권한을 확인해주세요.', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('서버 연결 문제로 내 기기에만 저장되었습니다.', 'error');
+                });
+            } else {
+                showToast('내 기기에 기록되었습니다!');
+            }
+        }
+
+        function clearRecords() {
+            if(confirm("모든 학습 기록을 초기화하시겠습니까? (이 기기의 기록만 지워집니다)")) {
+                studyRecords = [];
+                saveData();
+                updateDashboard();
+                showToast("학습 기록이 초기화되었습니다.");
+            }
+        }
+
+        function factoryReset() {
+            if(confirm("모든 설정이 초기 상태로 돌아갑니다. 계속하시겠습니까?")) {
+                localStorage.clear(); 
+                location.reload(); 
+            }
+        }
+
+        function updateDashboard() {
+            const totalMinutes = studyRecords.reduce((sum, record) => sum + record.time, 0);
+            const hours = Math.floor(totalMinutes / 60);
+            const mins = totalMinutes % 60;
+            
+            document.getElementById('total-hours').innerText = hours;
+            document.getElementById('total-minutes').innerText = mins;
+
+            const list = document.getElementById('record-list');
+            
+            if (studyRecords.length > 0) {
+                let listHTML = '';
+                [...studyRecords].reverse().forEach(record => {
+                    listHTML += `
+                        <div class="bg-white/90 p-4 rounded-2xl border border-white flex justify-between items-center animate-fade-in shadow-sm">
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="bg-purple-100 text-purple-700 text-[11px] font-black px-2 py-1 rounded-md shadow-sm">${record.subject}</span>
+                                    <span class="text-xs text-slate-500 font-bold">${record.date}</span>
+                                </div>
+                                <p class="text-sm font-bold text-slate-700">${record.material} <span class="text-slate-400 font-medium ml-1 text-xs">(${record.pass})</span></p>
+                            </div>
+                            <div class="bg-gradient-to-r from-pink-100 to-purple-100 text-pink-600 font-black text-lg px-4 py-2 rounded-xl shrink-0 shadow-sm border border-white">
+                                ${record.time}분
+                            </div>
+                        </div>
+                    `;
+                });
+                list.innerHTML = listHTML;
+            } else {
+                list.innerHTML = `
+                    <div id="empty-state" class="flex flex-col items-center justify-center py-10 text-slate-500 opacity-80 h-full">
+                        <i class="fa-regular fa-face-laugh-wink text-5xl mb-3"></i>
+                        <p class="text-sm font-bold">아직 기록이 없어요. 첫 공부를 시작해볼까요?</p>
+                    </div>
+                `;
+            }
+
+            updateChart();
+        }
+
+        function updateChart() {
+            const ctx = document.getElementById('balanceChart').getContext('2d');
+            
+            if (balanceChartInstance) {
+                balanceChartInstance.destroy();
+            }
+
+            if (studyRecords.length === 0) {
+                balanceChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['기록 없음'],
+                        datasets: [{
+                            data: [1],
+                            backgroundColor: ['rgba(255,255,255,0.5)'],
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        cutout: '70%'
+                    }
+                });
+                return;
+            }
+
+            const subjectTimes = {};
+            studyRecords.forEach(r => {
+                if (!subjectTimes[r.subject]) subjectTimes[r.subject] = 0;
+                subjectTimes[r.subject] += r.time;
+            });
+
+            const labels = Object.keys(subjectTimes);
+            const data = Object.values(subjectTimes);
+            const bgColors = labels.map((_, i) => pastelColors[i % pastelColors.length]);
+
+            balanceChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: bgColors,
+                        borderWidth: 3,
+                        borderColor: '#ffffff',
+                        hoverOffset: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            position: 'right', 
+                            labels: { font: { family: "'Pretendard', sans-serif", weight: 'bold' }, color: '#475569', boxWidth: 12 } 
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+    </script>
+</body>
+</html>

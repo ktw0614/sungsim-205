@@ -74,7 +74,6 @@
             gap: 25px;
         }
 
-        /* Glassmorphism Card Style */
         .card {
             background: var(--card-bg);
             backdrop-filter: blur(10px);
@@ -96,10 +95,10 @@
             background: rgba(255, 255, 255, 0.9);
         }
 
-        /* Animation Delays for Cards */
         .card:nth-child(1) { animation-delay: 0.1s; }
         .card:nth-child(2) { animation-delay: 0.2s; }
         .card:nth-child(3) { animation-delay: 0.3s; }
+        .card:nth-child(4) { animation-delay: 0.4s; }
 
         .card-icon {
             width: 60px;
@@ -116,6 +115,7 @@
         .icon-book { background: linear-gradient(135deg, #FFB7B2, #FF9A9E); }
         .icon-idea { background: linear-gradient(135deg, #C7CEEA, #A18CD1); }
         .icon-study { background: linear-gradient(135deg, #E2F0CB, #B5D596); }
+        .icon-tracker { background: linear-gradient(135deg, #FBC2EB, #A6C1EE); }
 
         .card h2 {
             font-size: 1.4rem;
@@ -173,7 +173,6 @@
             background: rgba(0, 0, 0, 0.08);
         }
 
-        /* Animations */
         @keyframes fadeInDown {
             from { opacity: 0; transform: translateY(-20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -208,9 +207,7 @@
             <h2>학급 북 갤러리</h2>
             <p>나를 변화시킨 책 속의 한 줄! 나만의 개성을 담아 디자인한 북카드를 전시하고 친구들과 감상평을 나누어 보세요.</p>
             <div class="action-buttons">
-                <!-- 북 갤러리 웹 도구 연결 -->
                 <a href="book_gallery.html" class="btn btn-primary"><i class="fa-solid fa-camera-retro"></i> 북 갤러리 입장</a>
-                <!-- PDF 안내문 연결 -->
                 <a href="./나만의 북카드 만들기 안내문.pdf" target="_blank" class="btn btn-secondary"><i class="fa-regular fa-file-lines"></i> 활동 안내문 보기</a>
             </div>
         </div>
@@ -223,9 +220,7 @@
             <h2>울림 프로젝트</h2>
             <p>학교 생활의 불편함을 개선할 반짝이는 아이디어를 남겨주세요. 공감(하트)을 가장 많이 받은 의견은 우리 반 공식 안건이 됩니다.</p>
             <div class="action-buttons">
-                <!-- 아이디어 월 웹 도구 연결 -->
                 <a href="ullim_idea_wall.html" class="btn btn-primary"><i class="fa-solid fa-comments"></i> 아이디어 월 입장</a>
-                <!-- PDF 안내문 연결 -->
                 <a href="./울림 프로젝트 안내문.pdf" target="_blank" class="btn btn-secondary"><i class="fa-regular fa-file-lines"></i> 활동 안내문 보기</a>
             </div>
         </div>
@@ -238,8 +233,20 @@
             <h2>학습 소모임 활동</h2>
             <p>스터디 모임 후 그날의 학습 목표, 알게 된 점, 어려웠던 점을 기록하세요. 제출된 보고서는 선생님의 시트로 자동 취합됩니다.</p>
             <div class="action-buttons">
-                <!-- 스터디 대시보드 웹 도구 연결 -->
                 <a href="study_dashboard.html" class="btn btn-primary"><i class="fa-solid fa-pen-to-square"></i> 보고서 작성하기</a>
+            </div>
+        </div>
+
+        <!-- 4. 순공 대시보드 카드 -->
+        <div class="card">
+            <div class="card-icon icon-tracker">
+                <i class="fa-solid fa-fire"></i>
+            </div>
+            <h2>나의 순공 대시보드</h2>
+            <p>오늘 하루 나의 순수 공부 시간을 기록하고 과목별 학습 밸런스를 확인해 보세요. 누적된 데이터는 시트로 자동 취합됩니다.</p>
+            <div class="action-buttons">
+                <!-- 파일명이 아래 생성할 파일명과 정확히 일치함 -->
+                <a href="study_time_tracker.html" class="btn btn-primary"><i class="fa-solid fa-stopwatch"></i> 대시보드 입장</a>
             </div>
         </div>
     </div>
